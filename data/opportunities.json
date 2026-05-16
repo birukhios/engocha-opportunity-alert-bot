@@ -1,1 +1,187 @@
-[]
+[
+  {
+    "id": "e14256224408e4752c935ff9",
+    "title": "Forecast to Publish a Notice of Funding Opportunity (NOFO) for NCI Community Oncology Research Program (NCORP) Research Bases (UG1 Clinical Trial Required)",
+    "link": "https://www.grants.gov/search-results-detail/358963",
+    "source": "Grants.gov",
+    "type": "funding",
+    "organization": "National Institutes of Health",
+    "location": "",
+    "deadline": "",
+    "summary": "NOT-CA-25-042 HHS-NIH11 forecasted forecast",
+    "date_found": "2026-05-16",
+    "score": 8,
+    "matched_keywords": [
+      "grant",
+      "funding",
+      "research"
+    ],
+    "why_it_fits": "It lines up with Engocha's focus through: grant, funding, research."
+  },
+  {
+    "id": "312823f6d85fb46c04567d8e",
+    "title": "Forecast to Publish a Funding Opportunity Announcement for Research Centers in Minority Institutions (RCMI) (U54 - Clinical Trial Optional)",
+    "link": "https://www.grants.gov/search-results-detail/359665",
+    "source": "Grants.gov",
+    "type": "funding",
+    "organization": "National Institutes of Health",
+    "location": "",
+    "deadline": "",
+    "summary": "FOR-MD-25-004 HHS-NIH11 forecasted forecast",
+    "date_found": "2026-05-16",
+    "score": 8,
+    "matched_keywords": [
+      "grant",
+      "funding",
+      "research"
+    ],
+    "why_it_fits": "It lines up with Engocha's focus through: grant, funding, research."
+  },
+  {
+    "id": "6f31955af65b98b6525413cf",
+    "title": "Forecast to Publish a Funding Opportunity Announcement for EmbraceHealth Clinical Research Network to Reduce Health Disparities – Coordinating Center",
+    "link": "https://www.grants.gov/search-results-detail/359864",
+    "source": "Grants.gov",
+    "type": "funding",
+    "organization": "National Institutes of Health",
+    "location": "",
+    "deadline": "",
+    "summary": "FOR-MD-25-009 HHS-NIH11 forecasted forecast",
+    "date_found": "2026-05-16",
+    "score": 8,
+    "matched_keywords": [
+      "grant",
+      "funding",
+      "research"
+    ],
+    "why_it_fits": "It lines up with Engocha's focus through: grant, funding, research."
+  },
+  {
+    "id": "ca1879997cbafaf2320ead0b",
+    "title": "Single Source for Establishing Pilot/Opportunity program for AI Models to Accelerate Diabetes Research (U24- Clinical Trials not allowed)",
+    "link": "https://www.grants.gov/search-results-detail/360657",
+    "source": "Grants.gov",
+    "type": "funding",
+    "organization": "National Institutes of Health",
+    "location": "",
+    "deadline": "",
+    "summary": "RFA-DK-26-314 HHS-NIH11 forecasted forecast",
+    "date_found": "2026-05-16",
+    "score": 7,
+    "matched_keywords": [
+      "grant",
+      "AI",
+      "research"
+    ],
+    "why_it_fits": "It lines up with Engocha's focus through: grant, AI, research."
+  },
+  {
+    "id": "28ff7ef48f32ce52e09cc323",
+    "title": "Strategic commercial engagement for U.S.–AU Trade and Investment",
+    "link": "https://www.grants.gov/search-results-detail/362295",
+    "source": "Grants.gov",
+    "type": "funding",
+    "organization": "U.S. Mission to Ethiopia",
+    "location": "",
+    "deadline": "06/08/2026",
+    "summary": "OFOP0002726 DOS-ETH posted synopsis",
+    "date_found": "2026-05-16",
+    "score": 6,
+    "matched_keywords": [
+      "Ethiopia",
+      "grant"
+    ],
+    "why_it_fits": "It lines up with Engocha's focus through: Ethiopia, grant."
+  },
+  {
+    "id": "6f9609562766ebea244d57bc",
+    "title": "Notice of Intent to Publish a Funding Opportunity Announcement for Impact of Technology and Digital Media Exposure Usage on Child and Adolescent Development",
+    "link": "https://www.grants.gov/search-results-detail/359070",
+    "source": "Grants.gov",
+    "type": "funding",
+    "organization": "National Institutes of Health",
+    "location": "",
+    "deadline": "",
+    "summary": "NOT-HD-25-008 HHS-NIH11 forecasted forecast",
+    "date_found": "2026-05-16",
+    "score": 6,
+    "matched_keywords": [
+      "grant",
+      "funding"
+    ],
+    "why_it_fits": "It lines up with Engocha's focus through: grant, funding."
+  },
+  {
+    "id": "1ba4002e83dcd9baa398bf06",
+    "title": "Infrastructure Innovation for Biological Research",
+    "link": "https://www.grants.gov/search-results-detail/347680",
+    "source": "Grants.gov",
+    "type": "funding",
+    "organization": "U.S. National Science Foundation",
+    "location": "",
+    "deadline": "",
+    "summary": "23-578 NSF posted synopsis",
+    "date_found": "2026-05-16",
+    "score": 6,
+    "matched_keywords": [
+      "grant",
+      "innovation",
+      "research"
+    ],
+    "why_it_fits": "It lines up with Engocha's focus through: grant, innovation, research."
+  },
+  {
+    "id": "08026292c67ec423324e8196",
+    "title": "Funding for New Counter-Disinformation Game",
+    "link": "https://www.grants.gov/search-results-detail/334791",
+    "source": "Grants.gov",
+    "type": "funding",
+    "organization": "U.S. Mission to the Netherlands",
+    "location": "",
+    "deadline": "",
+    "summary": "S-NL800-20-GR-3011 DOS-NLD forecasted forecast",
+    "date_found": "2026-05-16",
+    "score": 6,
+    "matched_keywords": [
+      "grant",
+      "funding"
+    ],
+    "why_it_fits": "It lines up with Engocha's focus through: grant, funding."
+  },
+  {
+    "id": "9556052a97b6b2361fd932c5",
+    "title": "Expanding global health security through local partnerships in Ethiopia",
+    "link": "https://www.grants.gov/search-results-detail/360333",
+    "source": "Grants.gov",
+    "type": "funding",
+    "organization": "Centers for Disease Control-GHC",
+    "location": "",
+    "deadline": "",
+    "summary": "CDC-RFA-JG-26-0046 HHS-CDC-GHC forecasted forecast",
+    "date_found": "2026-05-16",
+    "score": 6,
+    "matched_keywords": [
+      "Ethiopia",
+      "grant"
+    ],
+    "why_it_fits": "It lines up with Engocha's focus through: Ethiopia, grant."
+  },
+  {
+    "id": "68dfb3306f9ac9f7bcd0dd5e",
+    "title": "Engaging faith-based organizations to sustain lifesaving HIV and TB services in Ethiopia",
+    "link": "https://www.grants.gov/search-results-detail/360707",
+    "source": "Grants.gov",
+    "type": "funding",
+    "organization": "Centers for Disease Control-GHC",
+    "location": "",
+    "deadline": "",
+    "summary": "CDC-RFA-JG-26-0136 HHS-CDC-GHC forecasted forecast",
+    "date_found": "2026-05-16",
+    "score": 6,
+    "matched_keywords": [
+      "Ethiopia",
+      "grant"
+    ],
+    "why_it_fits": "It lines up with Engocha's focus through: Ethiopia, grant."
+  }
+]
