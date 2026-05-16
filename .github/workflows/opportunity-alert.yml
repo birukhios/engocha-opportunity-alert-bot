@@ -2,7 +2,7 @@ name: Opportunity Alert
 
 on:
   schedule:
-    # 8:13 AM, 1:13 PM, and 6:13 PM Africa/Addis_Ababa.
+    # 8:13 AM, 1:13 PM, and 6:11 PM Africa/Addis_Ababa.
     # Africa/Addis_Ababa is UTC+3, so these run at 5:13, 10:13, and 15:13 UTC.
     - cron: "13 5,10,15 * * *"
   workflow_dispatch:
