@@ -8,9 +8,12 @@ from __future__ import annotations
 
 import logging
 import os
-from html import unescape
+import re
 from abc import ABC, abstractmethod
+from html import unescape
 from typing import Iterable
+from urllib.parse import urljoin
+from xml.etree import ElementTree
 
 import requests
 from bs4 import BeautifulSoup
@@ -20,6 +23,7 @@ from storage import make_opportunity_id, utc_today
 
 LOGGER = logging.getLogger(__name__)
 REQUEST_TIMEOUT_SECONDS = 25
+MAX_UNJOBS_DETAIL_PAGES_PER_LISTING = 20
 USER_AGENT = "EngochaOpportunityAlert/1.0 (+https://github.com/)"
 
 
@@ -108,6 +112,114 @@ class ReliefWebJobsSource(OpportunitySource):
         return opportunities
 
 
+class ReliefWebJobsRssSource(OpportunitySource):
+    name = "ReliefWeb RSS"
+    feed_url = "https://reliefweb.int/jobs/rss.xml?country=87"
+
+    def fetch(self) -> list[dict]:
+        response = requests.get(
+            self.feed_url,
+            headers={"User-Agent": USER_AGENT},
+            timeout=REQUEST_TIMEOUT_SECONDS,
+        )
+        response.raise_for_status()
+        root = ElementTree.fromstring(response.content)
+
+        opportunities = []
+        for item in root.findall("./channel/item"):
+            title = _xml_text(item, "title")
+            link = _xml_text(item, "link")
+            description = _html_to_text(_xml_text(item, "description"))
+            if not title or not link:
+                continue
+
+            opportunities.append(
+                _normalized_opportunity(
+                    title=title,
+                    link=link,
+                    source=self.name,
+                    opportunity_type="job",
+                    organization=_extract_labeled_value(description, "Organization") or self.name,
+                    location="Ethiopia",
+                    deadline=_extract_labeled_value(description, "Closing date"),
+                    summary=description,
+                )
+            )
+        return opportunities
+
+
+class UNjobsSource(OpportunitySource):
+    name = "UNjobs"
+    base_url = "https://unjobs.org"
+    listing_urls = [
+        "https://unjobs.org/duty_stations/ethiopia",
+        "https://unjobs.org/duty_stations/remote",
+    ]
+
+    def fetch(self) -> list[dict]:
+        vacancy_urls = []
+        for listing_url in self.listing_urls:
+            vacancy_urls.extend(self._vacancy_urls(listing_url)[:MAX_UNJOBS_DETAIL_PAGES_PER_LISTING])
+
+        opportunities = []
+        for vacancy_url in list(dict.fromkeys(vacancy_urls)):
+            opportunity = self._fetch_vacancy(vacancy_url)
+            if opportunity:
+                opportunities.append(opportunity)
+        return opportunities
+
+    def _vacancy_urls(self, listing_url: str) -> list[str]:
+        response = requests.get(
+            listing_url,
+            headers={"User-Agent": USER_AGENT},
+            timeout=REQUEST_TIMEOUT_SECONDS,
+        )
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html.parser")
+        urls = []
+        for anchor in soup.select('a[href*="/vacancies/"]'):
+            href = anchor.get("href")
+            if href:
+                urls.append(urljoin(self.base_url, href))
+        return urls
+
+    def _fetch_vacancy(self, vacancy_url: str) -> dict | None:
+        response = requests.get(
+            vacancy_url,
+            headers={"User-Agent": USER_AGENT},
+            timeout=REQUEST_TIMEOUT_SECONDS,
+        )
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        title_node = soup.find("h2") or soup.find("h1")
+        title = title_node.get_text(" ", strip=True) if title_node else ""
+        if not title:
+            return None
+
+        page_text = soup.get_text(" ", strip=True)
+        organization = _extract_labeled_value(page_text, "Organization") or self.name
+        country = _extract_labeled_value(page_text, "Country")
+        city = _extract_labeled_value(page_text, "City")
+        deadline = _extract_labeled_value(page_text, "Closing date")
+        location = ", ".join(part for part in [city, country] if part)
+        if "remote" in title.lower() or "home based" in title.lower() or "home-based" in title.lower():
+            location = location or "Remote / Home based"
+
+        paragraphs = [node.get_text(" ", strip=True) for node in soup.find_all("p")[:8]]
+        summary = " ".join(paragraphs) or page_text[:2500]
+        return _normalized_opportunity(
+            title=title,
+            link=vacancy_url,
+            source=self.name,
+            opportunity_type="job",
+            organization=organization,
+            location=location,
+            deadline=deadline,
+            summary=summary,
+        )
+
+
 class GrantsGovFundingSource(OpportunitySource):
     name = "Grants.gov"
     api_url = "https://api.grants.gov/v1/api/search2"
@@ -194,12 +306,13 @@ class PlaceholderSource(OpportunitySource):
 
 def get_sources() -> list[OpportunitySource]:
     return [
+        ReliefWebJobsRssSource(),
+        UNjobsSource(),
         ReliefWebJobsSource(),
         GrantsGovFundingSource(),
         PlaceholderSource("fundsforNGOs", "Add RSS/API or terms-approved HTML collector later."),
         PlaceholderSource("Devex", "Add API/RSS or approved integration later."),
         PlaceholderSource("EU Funding & Tenders", "Add official API integration later."),
-        PlaceholderSource("UNjobs", "Add RSS or terms-approved collector later."),
         PlaceholderSource("Ethiojobs", "Add RSS/API or terms-approved collector later."),
         PlaceholderSource("LinkedIn search links", "Add manual search URL generation; avoid automated scraping."),
     ]
@@ -268,3 +381,13 @@ def _html_to_text(html: str) -> str:
         return ""
     soup = BeautifulSoup(html, "html.parser")
     return soup.get_text(" ", strip=True)
+
+
+def _xml_text(item: ElementTree.Element, tag: str) -> str:
+    node = item.find(tag)
+    return unescape((node.text or "").strip()) if node is not None else ""
+
+
+def _extract_labeled_value(text: str, label: str) -> str:
+    match = re.search(rf"{re.escape(label)}:\s*([^:]+?)(?=\s+[A-Z][A-Za-z /&()-]+:|$)", text)
+    return match.group(1).strip() if match else ""

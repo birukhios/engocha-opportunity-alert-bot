@@ -6,7 +6,7 @@ import argparse
 import logging
 import sys
 
-from scoring import MIN_SCORE, score_opportunity, why_it_fits
+from scoring import MIN_SCORE, is_relevant_match, score_opportunity, why_it_fits
 from sources import fetch_all_sources
 from storage import append_sent_opportunities, ensure_data_files, load_seen, save_seen
 from telegram import format_opportunity_message, send_telegram_message, telegram_configured
@@ -39,6 +39,8 @@ def main() -> int:
             continue
         result = score_opportunity(opportunity)
         if result.score < MIN_SCORE:
+            continue
+        if not is_relevant_match(opportunity, result.matched_keywords):
             continue
         opportunity["score"] = result.score
         opportunity["matched_keywords"] = result.matched_keywords

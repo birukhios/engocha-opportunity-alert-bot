@@ -16,7 +16,9 @@ A production-ready MVP that uses GitHub Actions as a daily scheduler, GitHub JSO
 
 Active sources:
 
+- ReliefWeb RSS for Ethiopia jobs. This does not require a ReliefWeb app name.
 - ReliefWeb API for NGO and humanitarian jobs.
+- UNjobs public Ethiopia and remote listings.
 - Grants.gov API for funding opportunities.
 
 Future-source placeholders are included for:
@@ -89,7 +91,7 @@ ReliefWeb requires an approved app name. Request one from the ReliefWeb API docu
 https://apidoc.reliefweb.int/parameters#appname
 ```
 
-If `RELIEFWEB_APP_NAME` is missing or not approved, the ReliefWeb source may fail, but the bot will continue running other sources.
+If `RELIEFWEB_APP_NAME` is missing or not approved, the ReliefWeb API source may fail, but the bot will continue running Grants.gov, ReliefWeb RSS, and UNjobs.
 
 ## Run Locally
 
@@ -165,8 +167,10 @@ Job keywords include:
 Product Manager, Digital Product, UX Research, Research Officer,
 Innovation Officer, MEAL, Monitoring and Evaluation, Data Officer,
 Program Manager, ICT Officer, Digital Transformation, Fintech, NGO,
-Addis Ababa, Ethiopia, Remote
+Addis Ababa, Ethiopia, Africa, Remote, Home based, Full-time
 ```
+
+For job alerts, the bot also requires a skill signal in the job title and a work-fit signal such as Ethiopia, Addis Ababa, Africa, remote, home based, or full-time. This keeps broad NGO posts from crowding out roles that better match product, research, MEAL, digital, data, innovation, and fintech skills.
 
 Extra weight is given to:
 

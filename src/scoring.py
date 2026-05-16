@@ -32,21 +32,47 @@ FUNDING_KEYWORDS = [
 
 JOB_KEYWORDS = [
     "Product Manager",
+    "Product Owner",
+    "Product Lead",
     "Digital Product",
     "UX Research",
+    "User Research",
+    "Design Research",
     "Research Officer",
+    "Research Manager",
+    "Research Consultant",
     "Innovation Officer",
+    "Innovation Manager",
+    "Innovation",
     "MEAL",
     "Monitoring and Evaluation",
+    "M&E",
     "Data Officer",
+    "Data Analyst",
+    "Data Manager",
+    "Data Visualization",
     "Program Manager",
+    "Programme Manager",
+    "Program Analyst",
+    "Programme Analyst",
+    "Program Advisor",
+    "Programme Advisor",
+    "Project Manager",
     "ICT Officer",
     "Digital Transformation",
+    "Digital Development",
     "Fintech",
     "NGO",
+    "Humanitarian",
+    "International Development",
     "Addis Ababa",
     "Ethiopia",
+    "Africa",
     "Remote",
+    "Home based",
+    "Home-based",
+    "Full-time",
+    "Full time",
 ]
 
 
@@ -60,6 +86,84 @@ EXTRA_WEIGHT_KEYWORDS = {
     "ai": 2,
     "research": 2,
     "digital product": 3,
+    "product owner": 3,
+    "product lead": 3,
+    "user research": 3,
+    "design research": 3,
+    "innovation": 2,
+    "meal": 3,
+    "monitoring and evaluation": 3,
+    "m&e": 3,
+    "data analyst": 2,
+    "data manager": 2,
+    "data visualization": 3,
+    "program manager": 2,
+    "programme manager": 2,
+    "program analyst": 2,
+    "programme analyst": 2,
+    "program advisor": 2,
+    "programme advisor": 2,
+    "project manager": 2,
+    "remote": 3,
+    "home based": 3,
+    "home-based": 3,
+    "full-time": 2,
+    "full time": 2,
+}
+
+
+JOB_SKILL_KEYWORDS = {
+    "product manager",
+    "product owner",
+    "product lead",
+    "digital product",
+    "ux research",
+    "user research",
+    "design research",
+    "research officer",
+    "research manager",
+    "research consultant",
+    "innovation officer",
+    "innovation manager",
+    "innovation",
+    "meal",
+    "monitoring and evaluation",
+    "m&e",
+    "data officer",
+    "data analyst",
+    "data manager",
+    "data visualization",
+    "program manager",
+    "programme manager",
+    "program analyst",
+    "programme analyst",
+    "program advisor",
+    "programme advisor",
+    "project manager",
+    "ict officer",
+    "digital transformation",
+    "digital development",
+    "fintech",
+}
+
+
+JOB_WORK_FIT_KEYWORDS = {
+    "ethiopia",
+    "addis ababa",
+    "africa",
+    "remote",
+    "home based",
+    "home-based",
+    "full-time",
+    "full time",
+}
+
+
+JOB_EXCLUSION_KEYWORDS = {
+    "internship",
+    "intern ",
+    "volunteer",
+    "unpaid",
 }
 
 
@@ -94,6 +198,20 @@ def why_it_fits(opportunity: dict, matched_keywords: list[str]) -> str:
     if opportunity.get("type") == "funding":
         return f"It lines up with Engocha's focus through: {top_terms}."
     return f"It matches your target role and geography signals through: {top_terms}."
+
+
+def is_relevant_match(opportunity: dict, matched_keywords: list[str]) -> bool:
+    """Require job matches to include both skill fit and location/work fit."""
+    if opportunity.get("type") != "job":
+        return True
+
+    normalized_matches = {keyword.lower() for keyword in matched_keywords}
+    text = _searchable_text(opportunity)
+    title_text = str(opportunity.get("title", "")).lower()
+    has_skill_fit = any(keyword in title_text for keyword in JOB_SKILL_KEYWORDS)
+    has_work_fit = bool(normalized_matches & JOB_WORK_FIT_KEYWORDS)
+    is_excluded = any(excluded in text for excluded in JOB_EXCLUSION_KEYWORDS)
+    return has_skill_fit and has_work_fit and not is_excluded
 
 
 def _searchable_text(opportunity: dict) -> str:
