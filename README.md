@@ -19,6 +19,8 @@ Active sources:
 - ReliefWeb RSS for Ethiopia jobs. This does not require a ReliefWeb app name.
 - ReliefWeb API for NGO and humanitarian jobs.
 - UNjobs public Ethiopia and remote listings.
+- NGOJobs Ethiopia public listings.
+- Ethiojobs Info RSS.
 - Grants.gov API for funding opportunities.
 
 Future-source placeholders are included for:
@@ -131,7 +133,7 @@ The workflow is at:
 .github/workflows/opportunity-alert.yml
 ```
 
-It runs daily at `05:13 UTC`, which is `08:13` in Africa/Addis_Ababa time.
+It runs three times per day at `05:13`, `10:13`, and `15:13 UTC`, which is `08:13`, `13:13`, and `18:13` in Africa/Addis_Ababa time.
 
 It can also be started manually from the GitHub Actions tab because `workflow_dispatch` is enabled.
 
@@ -158,8 +160,11 @@ Funding keywords include:
 ```text
 Ethiopia, Africa, grant, funding, startup, innovation, AI, research,
 survey, data collection, civic tech, digital public goods, youth employment,
-social impact, market research, community data, fintech
+social impact, market research, community data, fintech, entrepreneurship,
+SME, MSME, open data, digital inclusion, financial inclusion
 ```
+
+Funding alerts use a higher minimum score and an Engocha relevance gate. A funding opportunity must either mention Ethiopia/Africa or match multiple Engocha themes such as startup, civic tech, data collection, market research, community data, fintech, youth employment, digital public goods, AI, or social impact. Generic biomedical or academic research notices are filtered out.
 
 Job keywords include:
 

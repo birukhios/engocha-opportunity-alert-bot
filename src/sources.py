@@ -220,6 +220,117 @@ class UNjobsSource(OpportunitySource):
         )
 
 
+class NGOJobsEthiopiaSource(OpportunitySource):
+    name = "NGOJobs Ethiopia"
+    base_url = "https://ngojobs.et"
+    listing_urls = [
+        "https://ngojobs.et/jobs/type/full-time",
+        "https://ngojobs.et/jobs?q=monitoring",
+        "https://ngojobs.et/jobs?q=evaluation",
+        "https://ngojobs.et/jobs?q=data",
+        "https://ngojobs.et/jobs?q=research",
+        "https://ngojobs.et/jobs?q=innovation",
+        "https://ngojobs.et/jobs?q=digital",
+        "https://ngojobs.et/jobs?q=program",
+        "https://ngojobs.et/jobs?q=project",
+    ]
+
+    def fetch(self) -> list[dict]:
+        detail_urls = []
+        for listing_url in self.listing_urls:
+            detail_urls.extend(self._job_urls(listing_url))
+
+        opportunities = []
+        for detail_url in list(dict.fromkeys(detail_urls))[:35]:
+            opportunity = self._fetch_job(detail_url)
+            if opportunity:
+                opportunities.append(opportunity)
+        return opportunities
+
+    def _job_urls(self, listing_url: str) -> list[str]:
+        response = requests.get(
+            listing_url,
+            headers={"User-Agent": USER_AGENT},
+            timeout=REQUEST_TIMEOUT_SECONDS,
+        )
+        response.raise_for_status()
+        soup = BeautifulSoup(_decoded_text(response), "html.parser")
+        urls = []
+        for anchor in soup.select('a[href^="/jobs/"]'):
+            href = anchor.get("href", "")
+            if href.count("/") >= 2 and not href.startswith("/jobs/type"):
+                urls.append(urljoin(self.base_url, href))
+        return urls
+
+    def _fetch_job(self, detail_url: str) -> dict | None:
+        response = requests.get(
+            detail_url,
+            headers={"User-Agent": USER_AGENT},
+            timeout=REQUEST_TIMEOUT_SECONDS,
+        )
+        response.raise_for_status()
+        soup = BeautifulSoup(_decoded_text(response), "html.parser")
+
+        title_node = soup.find("h1")
+        title = title_node.get_text(" ", strip=True) if title_node else ""
+        if not title:
+            return None
+
+        text = soup.get_text(" ", strip=True)
+        paragraphs = [node.get_text(" ", strip=True) for node in soup.find_all("p")[:10]]
+        organization = _extract_ngojobs_company(soup, title) or self.name
+        location = _extract_after_label(text, "Location") or "Ethiopia"
+        deadline = _extract_after_label(text, "Deadline")
+        job_type = _extract_job_type(text)
+        summary = " ".join(part for part in [job_type, *paragraphs] if part)
+
+        return _normalized_opportunity(
+            title=title,
+            link=detail_url,
+            source=self.name,
+            opportunity_type="job",
+            organization=organization,
+            location=location,
+            deadline=deadline,
+            summary=summary,
+        )
+
+
+class EthiojobsInfoRssSource(OpportunitySource):
+    name = "Ethiojobs Info RSS"
+    feed_url = "https://ethiojobs.info/feed/"
+
+    def fetch(self) -> list[dict]:
+        response = requests.get(
+            self.feed_url,
+            headers={"User-Agent": USER_AGENT},
+            timeout=REQUEST_TIMEOUT_SECONDS,
+        )
+        response.raise_for_status()
+        root = ElementTree.fromstring(response.content)
+
+        opportunities = []
+        for item in root.findall("./channel/item")[:30]:
+            title = _xml_text(item, "title")
+            link = _xml_text(item, "link")
+            description = _html_to_text(_xml_text(item, "description"))
+            if not title or not link:
+                continue
+            opportunities.append(
+                _normalized_opportunity(
+                    title=title,
+                    link=link,
+                    source=self.name,
+                    opportunity_type="job",
+                    organization=self.name,
+                    location="Ethiopia",
+                    deadline=_extract_labeled_value(description, "Deadline"),
+                    summary=description,
+                )
+            )
+        return opportunities
+
+
 class GrantsGovFundingSource(OpportunitySource):
     name = "Grants.gov"
     api_url = "https://api.grants.gov/v1/api/search2"
@@ -228,15 +339,20 @@ class GrantsGovFundingSource(OpportunitySource):
         search_terms = [
             "Ethiopia",
             "Africa",
-            "innovation",
-            "AI",
-            "research",
-            "fintech",
-            "startup",
+            "Ethiopia innovation",
+            "Africa innovation",
+            "Africa fintech",
+            "financial inclusion Africa",
+            "digital inclusion Africa",
+            "civic technology",
             "digital public goods",
             "youth employment",
             "social impact",
             "data collection",
+            "market research",
+            "community data",
+            "startup",
+            "entrepreneurship Africa",
         ]
 
         results: dict[str, dict] = {}
@@ -263,6 +379,8 @@ class GrantsGovFundingSource(OpportunitySource):
                             item.get("number", ""),
                             item.get("agencyCode", ""),
                             item.get("agencyName", ""),
+                            item.get("fundingCategory", ""),
+                            item.get("fundingInstrument", ""),
                             item.get("oppStatus", ""),
                             item.get("docType", ""),
                         ]
@@ -308,6 +426,8 @@ def get_sources() -> list[OpportunitySource]:
     return [
         ReliefWebJobsRssSource(),
         UNjobsSource(),
+        NGOJobsEthiopiaSource(),
+        EthiojobsInfoRssSource(),
         ReliefWebJobsSource(),
         GrantsGovFundingSource(),
         PlaceholderSource("fundsforNGOs", "Add RSS/API or terms-approved HTML collector later."),
@@ -383,6 +503,13 @@ def _html_to_text(html: str) -> str:
     return soup.get_text(" ", strip=True)
 
 
+def _decoded_text(response: requests.Response) -> str:
+    response.encoding = response.encoding or "utf-8"
+    if response.encoding.lower() in {"iso-8859-1", "latin-1"}:
+        response.encoding = "utf-8"
+    return response.text
+
+
 def _xml_text(item: ElementTree.Element, tag: str) -> str:
     node = item.find(tag)
     return unescape((node.text or "").strip()) if node is not None else ""
@@ -391,3 +518,28 @@ def _xml_text(item: ElementTree.Element, tag: str) -> str:
 def _extract_labeled_value(text: str, label: str) -> str:
     match = re.search(rf"{re.escape(label)}:\s*([^:]+?)(?=\s+[A-Z][A-Za-z /&()-]+:|$)", text)
     return match.group(1).strip() if match else ""
+
+
+def _extract_after_label(text: str, label: str) -> str:
+    match = re.search(rf"{re.escape(label)}\s+(.+?)(?=\s+[A-Z][A-Za-z ]+\s|$)", text)
+    return match.group(1).strip() if match else ""
+
+
+def _extract_job_type(text: str) -> str:
+    for job_type in ["Full-Time", "Full Time", "Contract", "Consultancy", "Part-time", "Remote", "Hybrid"]:
+        if job_type.lower() in text.lower():
+            return job_type
+    return ""
+
+
+def _extract_ngojobs_company(soup: BeautifulSoup, title: str) -> str:
+    document_title = soup.title.get_text(" ", strip=True) if soup.title else ""
+    match = re.search(r"\bat\s+(.+?)\s+\|\s+NGOJobs Ethiopia", document_title)
+    if match:
+        return match.group(1).strip()
+
+    for anchor in soup.select('a[href^="/companies/"]'):
+        company = anchor.get_text(" ", strip=True)
+        if company and company.lower() not in title.lower():
+            return company
+    return ""

@@ -7,6 +7,7 @@ from dataclasses import dataclass
 
 
 MIN_SCORE = 3
+FUNDING_MIN_SCORE = 5
 
 
 FUNDING_KEYWORDS = [
@@ -27,6 +28,15 @@ FUNDING_KEYWORDS = [
     "market research",
     "community data",
     "fintech",
+    "entrepreneurship",
+    "SME",
+    "MSME",
+    "women",
+    "climate",
+    "governance",
+    "open data",
+    "digital inclusion",
+    "financial inclusion",
 ]
 
 
@@ -109,6 +119,61 @@ EXTRA_WEIGHT_KEYWORDS = {
     "home-based": 3,
     "full-time": 2,
     "full time": 2,
+    "entrepreneurship": 2,
+    "sme": 2,
+    "msme": 2,
+    "financial inclusion": 3,
+    "digital inclusion": 3,
+    "open data": 3,
+    "civic tech": 3,
+    "digital public goods": 3,
+    "data collection": 2,
+    "market research": 3,
+    "community data": 3,
+    "social impact": 2,
+    "youth employment": 3,
+}
+
+
+FUNDING_GEO_KEYWORDS = {
+    "ethiopia",
+    "africa",
+}
+
+
+FUNDING_ENGOCHA_KEYWORDS = {
+    "startup",
+    "innovation",
+    "ai",
+    "research",
+    "survey",
+    "data collection",
+    "civic tech",
+    "digital public goods",
+    "youth employment",
+    "social impact",
+    "market research",
+    "community data",
+    "fintech",
+    "entrepreneurship",
+    "sme",
+    "msme",
+    "open data",
+    "digital inclusion",
+    "financial inclusion",
+}
+
+
+FUNDING_EXCLUSION_KEYWORDS = {
+    "clinical trial",
+    "oncology",
+    "diabetes",
+    "minority institutions",
+    "biomedical",
+    "life science",
+    "life sciences",
+    "postdoctoral",
+    "criminal justice",
 }
 
 
@@ -201,9 +266,9 @@ def why_it_fits(opportunity: dict, matched_keywords: list[str]) -> str:
 
 
 def is_relevant_match(opportunity: dict, matched_keywords: list[str]) -> bool:
-    """Require job matches to include both skill fit and location/work fit."""
-    if opportunity.get("type") != "job":
-        return True
+    """Apply stricter fit gates after keyword scoring."""
+    if opportunity.get("type") == "funding":
+        return _is_relevant_funding(opportunity, matched_keywords)
 
     normalized_matches = {keyword.lower() for keyword in matched_keywords}
     text = _searchable_text(opportunity)
@@ -212,6 +277,18 @@ def is_relevant_match(opportunity: dict, matched_keywords: list[str]) -> bool:
     has_work_fit = bool(normalized_matches & JOB_WORK_FIT_KEYWORDS)
     is_excluded = any(excluded in text for excluded in JOB_EXCLUSION_KEYWORDS)
     return has_skill_fit and has_work_fit and not is_excluded
+
+
+def _is_relevant_funding(opportunity: dict, matched_keywords: list[str]) -> bool:
+    normalized_matches = {keyword.lower() for keyword in matched_keywords}
+    text = _searchable_text(opportunity)
+    has_geo_fit = bool(normalized_matches & FUNDING_GEO_KEYWORDS)
+    engocha_hits = normalized_matches & FUNDING_ENGOCHA_KEYWORDS
+    is_excluded = any(excluded in text for excluded in FUNDING_EXCLUSION_KEYWORDS)
+
+    # Engocha should see startup/social impact/data/digital funding, not every
+    # generic research notice that happens to contain "funding".
+    return not is_excluded and (has_geo_fit or len(engocha_hits) >= 2)
 
 
 def _searchable_text(opportunity: dict) -> str:
