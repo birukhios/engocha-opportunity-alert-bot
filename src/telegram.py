@@ -82,3 +82,18 @@ def format_opportunity_message(opportunity: dict) -> str:
             f"Link: {opportunity.get('link', '')}",
         ]
     )
+
+
+def format_run_summary(summary: dict) -> str:
+    return "\n".join(
+        [
+            "✅ Opportunity Alert Bot Ran",
+            "",
+            f"Collected: {summary.get('collected', 0)}",
+            f"Already Seen: {summary.get('already_seen', 0)}",
+            f"Below Score: {summary.get('below_score', 0)}",
+            f"Not Relevant: {summary.get('not_relevant', 0)}",
+            f"New Matches: {summary.get('new_matches', 0)}",
+            f"Alerts Sent: {summary.get('sent', 0)}",
+        ]
+    )

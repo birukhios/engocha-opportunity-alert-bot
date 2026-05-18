@@ -9,7 +9,7 @@ import sys
 from scoring import FUNDING_MIN_SCORE, MIN_SCORE, is_relevant_match, score_opportunity, why_it_fits
 from sources import fetch_all_sources
 from storage import append_sent_opportunities, ensure_data_files, load_seen, save_seen
-from telegram import format_opportunity_message, send_telegram_message, telegram_configured
+from telegram import format_opportunity_message, format_run_summary, send_telegram_message, telegram_configured
 
 
 MAX_ALERTS_PER_RUN = 10
@@ -22,6 +22,21 @@ def main() -> int:
         action="store_true",
         help="Collect and score opportunities without sending Telegram messages or updating seen state.",
     )
+    parser.add_argument(
+        "--ignore-seen",
+        action="store_true",
+        help="Ignore data/seen.json so manual test runs can resend top matches.",
+    )
+    parser.add_argument(
+        "--send-summary",
+        action="store_true",
+        help="Send a Telegram summary even when no opportunity alerts are sent.",
+    )
+    parser.add_argument(
+        "--test-telegram",
+        action="store_true",
+        help="Send a short Telegram test message and exit.",
+    )
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -30,18 +45,36 @@ def main() -> int:
     )
 
     ensure_data_files()
+    if args.test_telegram:
+        if send_telegram_message("✅ Engocha opportunity alert bot Telegram test succeeded."):
+            logging.info("Telegram test message sent successfully.")
+            return 0
+        logging.error("Telegram test message failed.")
+        return 1
+
     seen_ids = load_seen()
 
     collected = fetch_all_sources()
     scored = []
+    stats = {
+        "collected": len(collected),
+        "already_seen": 0,
+        "below_score": 0,
+        "not_relevant": 0,
+        "new_matches": 0,
+        "sent": 0,
+    }
     for opportunity in collected:
-        if opportunity["id"] in seen_ids:
+        if not args.ignore_seen and opportunity["id"] in seen_ids:
+            stats["already_seen"] += 1
             continue
         result = score_opportunity(opportunity)
         minimum_score = FUNDING_MIN_SCORE if opportunity.get("type") == "funding" else MIN_SCORE
         if result.score < minimum_score:
+            stats["below_score"] += 1
             continue
         if not is_relevant_match(opportunity, result.matched_keywords):
+            stats["not_relevant"] += 1
             continue
         opportunity["score"] = result.score
         opportunity["matched_keywords"] = result.matched_keywords
@@ -49,7 +82,16 @@ def main() -> int:
         scored.append(opportunity)
 
     top_matches = sorted(scored, key=lambda item: item.get("score", 0), reverse=True)[:MAX_ALERTS_PER_RUN]
+    stats["new_matches"] = len(scored)
     logging.info("Found %s new matches; alerting on top %s", len(scored), len(top_matches))
+    logging.info(
+        "Run stats: collected=%s already_seen=%s below_score=%s not_relevant=%s new_matches=%s",
+        stats["collected"],
+        stats["already_seen"],
+        stats["below_score"],
+        stats["not_relevant"],
+        stats["new_matches"],
+    )
 
     if args.dry_run:
         for item in top_matches:
@@ -58,6 +100,8 @@ def main() -> int:
 
     if not top_matches:
         logging.info("No new matching opportunities to send.")
+        if args.send_summary and telegram_configured():
+            send_telegram_message(format_run_summary(stats))
         return 0
 
     if not telegram_configured():
@@ -74,9 +118,13 @@ def main() -> int:
             logging.warning("Message was not sent for %s", opportunity["title"])
 
     if sent_items:
+        stats["sent"] = len(sent_items)
         append_sent_opportunities(sent_items)
         save_seen(seen_ids)
         logging.info("Saved %s sent opportunities.", len(sent_items))
+
+    if args.send_summary and telegram_configured():
+        send_telegram_message(format_run_summary(stats))
 
     return 0
 

@@ -2,10 +2,35 @@ name: Opportunity Alert
 
 on:
   schedule:
-    # 8:13 AM, 1:13 PM, and 6:11 PM Africa/Addis_Ababa.
+    # 8:13 AM, 1:13 PM, and 6:13 PM Africa/Addis_Ababa.
     # Africa/Addis_Ababa is UTC+3, so these run at 5:13, 10:13, and 15:13 UTC.
     - cron: "13 5,10,15 * * *"
   workflow_dispatch:
+    inputs:
+      test_telegram:
+        description: "Send only a short Telegram test message"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      ignore_seen:
+        description: "Ignore seen.json and resend top matches for testing"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      send_summary:
+        description: "Send a Telegram run summary"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
 
 permissions:
   contents: write
@@ -36,7 +61,18 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           RELIEFWEB_APP_NAME: ${{ secrets.RELIEFWEB_APP_NAME }}
-        run: python src/main.py
+        run: |
+          ARGS=""
+          if [ "${{ github.event.inputs.test_telegram }}" = "true" ]; then
+            ARGS="$ARGS --test-telegram"
+          fi
+          if [ "${{ github.event.inputs.ignore_seen }}" = "true" ]; then
+            ARGS="$ARGS --ignore-seen"
+          fi
+          if [ "${{ github.event.inputs.send_summary }}" = "true" ]; then
+            ARGS="$ARGS --send-summary"
+          fi
+          python src/main.py $ARGS
 
       - name: Commit updated opportunity data
         run: |
