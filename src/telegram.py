@@ -94,6 +94,10 @@ def format_run_summary(summary: dict) -> str:
             f"Below Score: {summary.get('below_score', 0)}",
             f"Not Relevant: {summary.get('not_relevant', 0)}",
             f"New Matches: {summary.get('new_matches', 0)}",
+            f"New Job Matches: {summary.get('new_job_matches', 0)}",
+            f"New Funding Matches: {summary.get('new_funding_matches', 0)}",
             f"Alerts Sent: {summary.get('sent', 0)}",
+            f"Job Alerts Sent: {summary.get('job_alerts_sent', 0)}",
+            f"Funding Alerts Sent: {summary.get('funding_alerts_sent', 0)}",
         ]
     )

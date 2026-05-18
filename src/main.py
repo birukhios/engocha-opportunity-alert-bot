@@ -12,7 +12,8 @@ from storage import append_sent_opportunities, ensure_data_files, load_seen, sav
 from telegram import format_opportunity_message, format_run_summary, send_telegram_message, telegram_configured
 
 
-MAX_ALERTS_PER_RUN = 10
+MAX_JOB_ALERTS_PER_RUN = 10
+MAX_FUNDING_ALERTS_PER_RUN = 10
 
 
 def main() -> int:
@@ -62,7 +63,11 @@ def main() -> int:
         "below_score": 0,
         "not_relevant": 0,
         "new_matches": 0,
+        "new_job_matches": 0,
+        "new_funding_matches": 0,
         "sent": 0,
+        "job_alerts_sent": 0,
+        "funding_alerts_sent": 0,
     }
     for opportunity in collected:
         if not args.ignore_seen and opportunity["id"] in seen_ids:
@@ -81,16 +86,33 @@ def main() -> int:
         opportunity["why_it_fits"] = why_it_fits(opportunity, result.matched_keywords)
         scored.append(opportunity)
 
-    top_matches = sorted(scored, key=lambda item: item.get("score", 0), reverse=True)[:MAX_ALERTS_PER_RUN]
+    job_matches = [item for item in scored if item.get("type") == "job"]
+    funding_matches = [item for item in scored if item.get("type") == "funding"]
+    top_job_matches = sorted(job_matches, key=lambda item: item.get("score", 0), reverse=True)[:MAX_JOB_ALERTS_PER_RUN]
+    top_funding_matches = sorted(funding_matches, key=lambda item: item.get("score", 0), reverse=True)[
+        :MAX_FUNDING_ALERTS_PER_RUN
+    ]
+    top_matches = top_job_matches + top_funding_matches
     stats["new_matches"] = len(scored)
-    logging.info("Found %s new matches; alerting on top %s", len(scored), len(top_matches))
+    stats["new_job_matches"] = len(job_matches)
+    stats["new_funding_matches"] = len(funding_matches)
     logging.info(
-        "Run stats: collected=%s already_seen=%s below_score=%s not_relevant=%s new_matches=%s",
+        "Found %s new matches (%s jobs, %s funding); alerting on %s jobs and %s funding",
+        len(scored),
+        len(job_matches),
+        len(funding_matches),
+        len(top_job_matches),
+        len(top_funding_matches),
+    )
+    logging.info(
+        "Run stats: collected=%s already_seen=%s below_score=%s not_relevant=%s new_matches=%s job_matches=%s funding_matches=%s",
         stats["collected"],
         stats["already_seen"],
         stats["below_score"],
         stats["not_relevant"],
         stats["new_matches"],
+        stats["new_job_matches"],
+        stats["new_funding_matches"],
     )
 
     if args.dry_run:
@@ -114,6 +136,10 @@ def main() -> int:
         if send_telegram_message(message):
             sent_items.append(opportunity)
             seen_ids.add(opportunity["id"])
+            if opportunity.get("type") == "funding":
+                stats["funding_alerts_sent"] += 1
+            else:
+                stats["job_alerts_sent"] += 1
         else:
             logging.warning("Message was not sent for %s", opportunity["title"])
 

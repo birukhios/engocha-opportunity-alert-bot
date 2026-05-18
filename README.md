@@ -7,7 +7,9 @@ A production-ready MVP that uses GitHub Actions as a daily scheduler, GitHub JSO
 - Checks public opportunity sources for Engocha funding and relevant jobs.
 - Scores each opportunity with configured funding and job keywords.
 - Sends only new matches with a score of `3` or higher.
-- Limits Telegram delivery to the top `10` matches per run.
+- Sends job and funding alerts in separate batches so funding never crowds jobs out of the alert limit.
+- Limits Telegram delivery to the top `10` job matches and top `10` funding matches per run.
+- Sends a Telegram run summary on every scheduled run, even when there are no new opportunity alerts.
 - Stores sent opportunity IDs in `data/seen.json`.
 - Stores sent opportunity details in `data/opportunities.json`.
 - Commits updated JSON files back to the repository from GitHub Actions.
@@ -136,6 +138,12 @@ The workflow is at:
 It runs three times per day at `05:13`, `10:13`, and `15:13 UTC`, which is `08:13`, `13:13`, and `18:13` in Africa/Addis_Ababa time.
 
 It can also be started manually from the GitHub Actions tab because `workflow_dispatch` is enabled.
+
+Manual runs can also:
+
+- send a Telegram test message,
+- ignore `seen.json` for a resend test,
+- send a run summary.
 
 The workflow has:
 

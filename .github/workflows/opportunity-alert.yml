@@ -63,6 +63,9 @@ jobs:
           RELIEFWEB_APP_NAME: ${{ secrets.RELIEFWEB_APP_NAME }}
         run: |
           ARGS=""
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            ARGS="$ARGS --send-summary"
+          fi
           if [ "${{ github.event.inputs.test_telegram }}" = "true" ]; then
             ARGS="$ARGS --test-telegram"
           fi
